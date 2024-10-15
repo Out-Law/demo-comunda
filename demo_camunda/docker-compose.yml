@@ -1,0 +1,41 @@
+version: '3.7'
+services:
+  zeebe:
+    image: camunda/zeebe:8.2.10  # Замените на существующую версию
+    environment:
+      - ZEEBE_LOG_LEVEL=info
+    ports:
+      - "26501:26500"  # gRPC порт Zeebe
+
+  operate:
+    image: camunda/operate:8.2.10  # Замените на существующую версию
+    depends_on:
+      - elasticsearch
+      - zeebe
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - CAMUNDA_OPERATE_ZEEBE_GATEWAY_ADDRESS=zeebe:26500
+    ports:
+      - "8080:8080"  # Web UI Operate
+
+  tasklist:
+    image: camunda/tasklist:8.2.10  # Замените на существующую версию
+    depends_on:
+      - zeebe
+    environment:
+      - CAMUNDA_TASKLIST_ZEEBE_GATEWAY_ADDRESS=zeebe:26500
+    ports:
+      - "8081:8081"  # Web UI Tasklist
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9201:9200"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    ports:
+      - "5601:5601"
